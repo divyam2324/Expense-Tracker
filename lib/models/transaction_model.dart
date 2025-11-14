@@ -1,21 +1,22 @@
 import 'package:hive/hive.dart';
 
+
 @HiveType(typeId: 0)
 class TransactionModel extends HiveObject {
   @HiveField(0)
-  String id; // uuid
+  String id;
 
   @HiveField(1)
   double amount;
 
   @HiveField(2)
-  bool isExpense; // true -> expense, false -> income
+  bool isExpense;
 
   @HiveField(3)
   String category;
 
   @HiveField(4)
-  String paymentMode; // Cash / UPI / Card
+  String paymentMode;
 
   @HiveField(5)
   DateTime date;
@@ -24,7 +25,7 @@ class TransactionModel extends HiveObject {
   String note;
 
   @HiveField(7)
-  String receiptPath; // local path for receipt image
+  String receiptPath;
 
   @HiveField(8)
   bool recurring;
@@ -42,28 +43,28 @@ class TransactionModel extends HiveObject {
   });
 
   Map<String, dynamic> toMap() => {
-    'id': id,
-    'amount': amount,
-    'isExpense': isExpense,
-    'category': category,
-    'paymentMode': paymentMode,
-    'date': date.toIso8601String(),
-    'note': note,
-    'receiptPath': receiptPath,
-    'recurring': recurring,
-  };
+        'id': id,
+        'amount': amount,
+        'isExpense': isExpense,
+        'category': category,
+        'paymentMode': paymentMode,
+        'date': date.toIso8601String(),
+        'note': note,
+        'receiptPath': receiptPath,
+        'recurring': recurring,
+      };
 
   factory TransactionModel.fromMap(Map<String, dynamic> m) => TransactionModel(
-    id: m['id'],
-    amount: (m['amount'] as num).toDouble(),
-    isExpense: m['isExpense'],
-    category: m['category'],
-    paymentMode: m['paymentMode'],
-    date: DateTime.parse(m['date']),
-    note: m['note'] ?? '',
-    receiptPath: m['receiptPath'] ?? '',
-    recurring: m['recurring'] ?? false,
-  );
+        id: m['id'],
+        amount: (m['amount'] as num).toDouble(),
+        isExpense: m['isExpense'],
+        category: m['category'],
+        paymentMode: m['paymentMode'],
+        date: DateTime.parse(m['date']),
+        note: m['note'] ?? '',
+        receiptPath: m['receiptPath'] ?? '',
+        recurring: m['recurring'] ?? false,
+      );
 }
 
 class TransactionModelAdapter extends TypeAdapter<TransactionModel> {

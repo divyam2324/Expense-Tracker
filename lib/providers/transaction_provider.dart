@@ -3,22 +3,27 @@ import '../models/transaction_model.dart';
 import '../repositories/local_repository.dart';
 import 'package:uuid/uuid.dart';
 
-final localRepoProvider = Provider<LocalRepository>((ref) => LocalRepository());
+final localRepoProvider =
+    Provider<LocalRepository>((ref) => LocalRepository());
 
-final transactionListProvider = StateNotifierProvider<TransactionListNotifier, List<TransactionModel>>((ref) {
+final transactionListProvider =
+    StateNotifierProvider<TransactionListNotifier, List<TransactionModel>>(
+        (ref) {
   final repo = ref.read(localRepoProvider);
   return TransactionListNotifier(repo);
 });
 
 class TransactionListNotifier extends StateNotifier<List<TransactionModel>> {
   final LocalRepository repo;
+
   TransactionListNotifier(this.repo) : super([]) {
     _load();
   }
 
   Future<void> _load() async {
     await repo.init();
-    state = repo.getAll();
+    state = repo.getAll()
+      ..sort((a, b) => b.date.compareTo(a.date));
   }
 
   Future<void> addTransaction({
@@ -31,8 +36,9 @@ class TransactionListNotifier extends StateNotifier<List<TransactionModel>> {
     String receiptPath = '',
     bool recurring = false,
   }) async {
-    final id = Uuid().v4();
-    final t = TransactionModel(
+    final id = const Uuid().v4();
+
+    final tx = TransactionModel(
       id: id,
       amount: amount,
       isExpense: isExpense,
@@ -43,8 +49,10 @@ class TransactionListNotifier extends StateNotifier<List<TransactionModel>> {
       receiptPath: receiptPath,
       recurring: recurring,
     );
-    await repo.add(t);
-    state = [...state, t]..sort((a,b)=>b.date.compareTo(a.date));
+
+    await repo.add(tx);
+
+    state = [...state, tx]..sort((a, b) => b.date.compareTo(a.date));
   }
 
   Future<void> deleteTransaction(String id) async {
@@ -54,9 +62,9 @@ class TransactionListNotifier extends StateNotifier<List<TransactionModel>> {
 
   Future<void> updateTransaction(TransactionModel t) async {
     await repo.update(t);
+
     state = [
-      for (final tx in state)
-        if (tx.id == t.id) t else tx
-    ]..sort((a,b)=>b.date.compareTo(a.date));
+      for (final old in state) (old.id == t.id ? t : old)
+    ]..sort((a, b) => b.date.compareTo(a.date));
   }
 }

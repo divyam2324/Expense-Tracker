@@ -1,35 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/transaction_model.dart';
+import '../providers/transaction_provider.dart';
+import '../widgets/add_transaction_modal.dart';
 
-class TransactionTile extends StatelessWidget {
+class TransactionTile extends ConsumerWidget {
   final TransactionModel transaction;
-  const TransactionTile({super.key, required this.transaction});
+
+  const TransactionTile({
+    super.key,
+    required this.transaction,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Dismissible(
+      key: Key(transaction.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+
+      // DELETE
+      onDismissed: (_) async {
+        await ref
+            .read(transactionListProvider.notifier)
+            .deleteTransaction(transaction.id);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Transaction deleted")),
+        );
+      },
+
       child: ListTile(
-        leading: Icon(
-          transaction.isExpense ? Icons.arrow_upward : Icons.arrow_downward,
-          color: transaction.isExpense ? Colors.red : Colors.green,
+        title: Text(transaction.note.isEmpty ? transaction.category : transaction.note),
+        subtitle: Text(
+          "${transaction.category} • ₹${transaction.amount}",
         ),
-        title: Text(transaction.category),
-        subtitle: Text(transaction.note),
-        trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '₹${transaction.amount.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: transaction.isExpense ? Colors.red : Colors.green,
-              ),
+
+        trailing: Text(
+          "${transaction.date.day}/${transaction.date.month}/${transaction.date.year}",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+
+        // LONG PRESS → EDIT
+        onLongPress: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => AddTransactionModal(
+              editTransaction: transaction,
             ),
-            Text(transaction.paymentMode,
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
