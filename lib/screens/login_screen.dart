@@ -15,7 +15,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _loading = false;
 
-  void _showError(String s) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s)));
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,49 +29,70 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
+            TextField(
+              controller: _emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
             const SizedBox(height: 8),
-            TextField(controller: _passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+            TextField(
+              controller: _passCtrl,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
             const SizedBox(height: 16),
-            _loading ? const CircularProgressIndicator() : Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    setState(() => _loading = true);
-                    try {
-                      await authService.signInWithEmail(_emailCtrl.text.trim(), _passCtrl.text);
-                      // on success firebaseUserProvider will update and navigate automatically
-                    } catch (e) {
-                      _showError(e.toString());
-                    } finally {
-                      setState(() => _loading = false);
-                    }
-                  },
-                  child: const Text('Sign in'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    setState(() => _loading = true);
-                    try {
-                      final userCred = await authService.signInWithGoogle();
-                      if (userCred == null) _showError('Google sign-in cancelled');
-                    } catch (e) {
-                      _showError(e.toString());
-                    } finally {
-                      setState(() => _loading = false);
-                    }
-                  },
-                  icon: const Icon(Icons.login),
-                  label: const Text('Sign in with Google'),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
-                  child: const Text('Create account'),
-                ),
-              ],
-            )
+
+            _loading
+                ? const CircularProgressIndicator()
+                : Column(
+                    children: [
+                      /// ------------------------
+                      /// EMAIL + PASSWORD SIGN-IN
+                      /// ------------------------
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (_emailCtrl.text.isEmpty ||
+                              _passCtrl.text.isEmpty) {
+                            _showError("Enter email & password");
+                            return;
+                          }
+
+                          setState(() => _loading = true);
+
+                          final user = await authService.signIn(
+                            _emailCtrl.text.trim(),
+                            _passCtrl.text.trim(),
+                          );
+
+                          setState(() => _loading = false);
+
+                          if (user == null) {
+                            _showError("Invalid login credentials");
+                          }
+
+                          // NO MANUAL NAVIGATION REQUIRED
+                          // AuthGate will detect user & navigate to home
+                        },
+                        child: const Text("Sign In"),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      /// ------------------------
+                      /// NAVIGATE TO SIGNUP
+                      /// ------------------------
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SignupScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text("Create account"),
+                      ),
+                    ],
+                  ),
           ],
         ),
       ),

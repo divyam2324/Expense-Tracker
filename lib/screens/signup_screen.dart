@@ -10,42 +10,75 @@ class SignupScreen extends ConsumerStatefulWidget {
 }
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  bool _loading = false;
-
-  void _showError(String s) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s)));
+  final _formKey = GlobalKey<FormState>();
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final name = TextEditingController();
+  bool loading = false;
 
   @override
   Widget build(BuildContext context) {
-    final authService = ref.read(authServiceProvider);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign up')),
+      appBar: AppBar(title: const Text("Create Account")),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-            const SizedBox(height: 8),
-            TextField(controller: _passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
-            const SizedBox(height: 16),
-            _loading ? const CircularProgressIndicator() : ElevatedButton(
-              onPressed: () async {
-                setState(() => _loading = true);
-                try {
-                  await authService.signUpWithEmail(_emailCtrl.text.trim(), _passCtrl.text);
-                  // On success the stream updates and app navigates to Home
-                  Navigator.pop(context);
-                } catch (e) {
-                  _showError(e.toString());
-                } finally {
-                  setState(() => _loading = false);
-                }
-              },
-              child: const Text('Create account'),
-            )
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: name,
+                decoration: const InputDecoration(labelText: "Full Name"),
+                validator: (v) => v!.isEmpty ? "Name is required" : null,
+              ),
+              TextFormField(
+                controller: email,
+                decoration: const InputDecoration(labelText: "Email"),
+                validator: (v) => v!.contains("@") ? null : "Enter valid email",
+              ),
+              TextFormField(
+                controller: password,
+                decoration: const InputDecoration(labelText: "Password"),
+                obscureText: true,
+                validator: (v) => v!.length < 6 ? "Password too short" : null,
+              ),
+              const SizedBox(height: 24),
+              loading
+                  ? const CircularProgressIndicator()
+                  : FilledButton(
+                    onPressed: () async {
+                      if (!_formKey.currentState!.validate()) return;
+
+                      setState(() => loading = true);
+
+                      final auth = ref.read(authServiceProvider);
+                      final res = await auth.signUp(
+                        email.text.trim(),
+                        password.text.trim(),
+                        displayName: name.text.trim(),
+                      );
+
+                      setState(() => loading = false);
+
+                      if (res == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Signup failed")),
+                        );
+                        return;
+                      }
+
+                      // Auth state will automatically update and navigate via AuthGate
+                      // No need to manually navigate
+                    },
+                    child: const Text("Create Account"),
+                  ),
+              TextButton(
+                onPressed:
+                    () => Navigator.pushReplacementNamed(context, '/login'),
+                child: const Text("Already have an account? Login"),
+              ),
+            ],
+          ),
         ),
       ),
     );
