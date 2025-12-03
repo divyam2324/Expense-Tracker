@@ -19,7 +19,6 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
   final _formKey = GlobalKey<FormState>();
 
   double? amount;
-  bool isExpense = true;
   String category = 'Others';
   String paymentMode = 'Cash';
   DateTime date = DateTime.now();
@@ -37,7 +36,6 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
     if (widget.editTransaction != null) {
       final t = widget.editTransaction!;
       amount = t.amount;
-      isExpense = t.isExpense;
       category = t.category;
       paymentMode = t.paymentMode;
       date = t.date;
@@ -82,8 +80,8 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                   prefixText: "₹",
                 ),
                 keyboardType: TextInputType.number,
-                validator: (v) =>
-                    v == null || v.isEmpty ? "Enter amount" : null,
+                validator:
+                    (v) => v == null || v.isEmpty ? "Enter amount" : null,
                 onSaved: (v) => amount = double.tryParse(v ?? "0") ?? 0,
               ),
               const SizedBox(height: 12),
@@ -102,35 +100,13 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
               ),
               const SizedBox(height: 12),
 
-              // Income/Expense
-              DropdownButtonFormField<String>(
-                value: isExpense ? "Expense" : "Income",
-                items: const [
-                  DropdownMenuItem(value: "Expense", child: Text("Expense")),
-                  DropdownMenuItem(value: "Income", child: Text("Income")),
-                ],
-                onChanged: (v) => setState(() {
-                  isExpense = v == "Expense";
-                }),
-                decoration: const InputDecoration(labelText: "Type"),
-              ),
-
-              const SizedBox(height: 12),
-
               // Category
               DropdownButtonFormField<String>(
                 value: category,
-                items: [
-                  'Food',
-                  'Travel',
-                  'Bills',
-                  'Shopping',
-                  'Salary',
-                  'Others'
-                ]
-                    .map((e) =>
-                        DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
+                items:
+                    ['Food', 'Travel', 'Bills', 'Shopping', 'Salary', 'Others']
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
                 onChanged: (v) => setState(() => category = v!),
                 decoration: const InputDecoration(labelText: "Category"),
               ),
@@ -140,10 +116,10 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
               // Payment Mode
               DropdownButtonFormField<String>(
                 value: paymentMode,
-                items: ['Cash', 'UPI', 'Card']
-                    .map((e) =>
-                        DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
+                items:
+                    ['Cash', 'UPI', 'Card']
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
                 onChanged: (v) => setState(() => paymentMode = v!),
                 decoration: const InputDecoration(labelText: "Payment Mode"),
               ),
@@ -183,16 +159,14 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                       setState(() => receiptPath = path);
 
                       final ocrText = await OcrService.extractText(path);
-                      final parsed =
-                          OcrService.extractAmountAndDate(ocrText);
+                      final parsed = OcrService.extractAmountAndDate(ocrText);
 
                       if (parsed.amount != null) {
                         _amountCtrl.text = parsed.amount.toString();
                         amount = parsed.amount;
                       }
 
-                      final suggestion =
-                          CategoryAI.suggestCategory(ocrText);
+                      final suggestion = CategoryAI.suggestCategory(ocrText);
                       if (suggestion != null) {
                         setState(() => category = suggestion);
                       }
@@ -202,11 +176,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                   ),
 
                   const SizedBox(width: 12),
-                  Text(
-                    receiptPath.isEmpty
-                        ? "No receipt"
-                        : "Receipt attached",
-                  )
+                  Text(receiptPath.isEmpty ? "No receipt" : "Receipt attached"),
                 ],
               ),
 
@@ -218,8 +188,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
 
-                    final notifier =
-                        ref.read(transactionListProvider.notifier);
+                    final notifier = ref.read(transactionListProvider.notifier);
 
                     if (isEditing) {
                       // UPDATE
@@ -227,7 +196,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                         TransactionModel(
                           id: widget.editTransaction!.id,
                           amount: amount!,
-                          isExpense: isExpense,
+                          isExpense: true,
                           category: category,
                           paymentMode: paymentMode,
                           date: date,
@@ -239,7 +208,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                       // ADD NEW
                       await notifier.addTransaction(
                         amount: amount!,
-                        isExpense: isExpense,
+                        isExpense: true,
                         category: category,
                         paymentMode: paymentMode,
                         date: date,

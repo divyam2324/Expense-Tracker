@@ -22,8 +22,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final Map<DateTime, double> dailyTotals = {};
     for (var t in transactions) {
       final key = DateTime(t.date.year, t.date.month, t.date.day);
-      dailyTotals[key] =
-          (dailyTotals[key] ?? 0) + (t.isExpense ? -t.amount : t.amount);
+      dailyTotals[key] = (dailyTotals[key] ?? 0) + t.amount;
     }
 
     final daysInMonth = DateUtils.getDaysInMonth(
@@ -51,12 +50,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ),
           child: Card(
-            color:
-                total == 0
-                    ? Colors.grey[200]
-                    : total > 0
-                    ? Colors.green[100]
-                    : Colors.red[100],
+            color: total == 0 ? Colors.grey[200] : Colors.red[100],
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: Column(
@@ -78,8 +72,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         '₹${total.toStringAsFixed(0)}',
                         style: TextStyle(
                           fontSize: 10,
-                          color:
-                              total >= 0 ? Colors.green[700] : Colors.red[700],
+                          color: Colors.red[700],
                         ),
                       ),
                     ),

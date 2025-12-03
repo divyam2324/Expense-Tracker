@@ -56,20 +56,23 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
     required int days,
   }) {
     final now = DateTime.now();
-    final start = now.subtract(Duration(days: days));
-    final filtered =
-        transactions
-            .where((t) => t.date.isAfter(start) && t.date.isBefore(now))
-            .toList();
+    // Normalize to whole days so the period is clear:
+    // e.g. for 7 days, include today and previous 6 days.
+    final today = DateTime(now.year, now.month, now.day);
+    final startDate = today.subtract(Duration(days: days - 1));
 
-    double cash = 0, upi = 0, card = 0, totalExpense = 0, totalIncome = 0;
+    final filtered =
+        transactions.where((t) {
+          final d = DateTime(t.date.year, t.date.month, t.date.day);
+          return (d.isAtSameMomentAs(startDate) || d.isAfter(startDate)) &&
+              (d.isAtSameMomentAs(today) || d.isBefore(today));
+        }).toList();
+
+    double cash = 0, upi = 0, card = 0, totalExpense = 0;
     Map<String, double> categoryMap = {};
 
     for (var t in filtered) {
-      if (t.isExpense)
-        totalExpense += t.amount;
-      else
-        totalIncome += t.amount;
+      totalExpense += t.amount;
 
       if (t.paymentMode == 'Cash') cash += t.amount;
       if (t.paymentMode == 'UPI') upi += t.amount;
@@ -81,10 +84,6 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        Text(
-          'Income: ₹${totalIncome.toStringAsFixed(2)}',
-          style: const TextStyle(color: Colors.green, fontSize: 16),
-        ),
         Text(
           'Expenses: ₹${totalExpense.toStringAsFixed(2)}',
           style: const TextStyle(color: Colors.red, fontSize: 16),
@@ -195,10 +194,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                 .where((t) => t.date.isAfter(start) && t.date.isBefore(end))
                 .toList();
 
-        double total = filtered.fold(
-          0,
-          (sum, t) => sum + (t.isExpense ? -t.amount : t.amount),
-        );
+        double total = filtered.fold(0, (sum, t) => sum + t.amount);
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -220,7 +216,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             ),
             const SizedBox(height: 10),
             Text(
-              'Net Total: ₹${total.toStringAsFixed(2)}',
+              'Total Expense: ₹${total.toStringAsFixed(2)}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],

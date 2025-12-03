@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../models/transaction_model.dart';
 
 class ExcelExportService {
@@ -32,20 +31,17 @@ class ExcelExportService {
       ]);
     }
 
-    // Ask for permission (for Android)
-    if (await Permission.storage.request().isGranted) {
-      Directory? directory = await getExternalStorageDirectory();
-      String dirPath = "${directory!.path}/ExpenseReports";
-      await Directory(dirPath).create(recursive: true);
+    // Save inside app-specific documents directory (no runtime permission needed)
+    final directory = await getApplicationDocumentsDirectory();
+    final dirPath = "${directory.path}/ExpenseReports";
+    await Directory(dirPath).create(recursive: true);
 
-      String filePath = "$dirPath/Expense_Report_${period}.xlsx";
-      File(filePath)
-        ..createSync(recursive: true)
-        ..writeAsBytesSync(excel.encode()!);
+    final filePath = "$dirPath/Expense_Report_${period}.xlsx";
+    File(filePath)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(excel.encode()!);
 
-      return filePath;
-    } else {
-      throw Exception('Storage permission not granted');
-    }
+    // Return the path so UI can show it or share it
+    return filePath;
   }
 }
